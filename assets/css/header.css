@@ -1,0 +1,26 @@
+.header {
+  background-color: #2b2c31;
+}
+.navbar {
+  background-color: transparent !important;
+}
+.nav {
+  margin-left: 150px;
+  font-size: 25px;
+}
+.nav-item {
+  margin-left: 50px;
+}
+.nav #nav-item a {
+  color: white;
+}
+.nav #openSearchBtn a {
+  color: white;
+}
+.nav #dropdown-menu li a {
+  color: black;
+}
+#cart-count {
+  margin-top: 33px;
+  margin-left: 8px;
+}

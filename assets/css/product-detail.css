@@ -1,0 +1,29 @@
+body {
+  background-color: #2d2d2d;
+  color: white;
+}
+.card-custom {
+  background-color: #1a1a1a;
+  border: none;
+}
+.section-title {
+  font-weight: bold;
+  border-left: 5px solid #4caf50;
+  padding-left: 10px;
+  margin-top: 20px;
+}
+.footer {
+  background-color: #27ae60;
+  color: white;
+  padding: 30px 15px;
+}
+.footer a {
+  color: white;
+  text-decoration: none;
+}
+.footer .title {
+  font-weight: bold;
+}
+#page1 {
+  margin-bottom: 40px;
+}

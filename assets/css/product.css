@@ -1,0 +1,35 @@
+.page1 {
+  background-color: #2b2c31;
+}
+.page1 .container {
+  padding-bottom: 50px; /* Tạo khoảng cách bên trong phần chứa card */
+}
+.card:hover {
+  background-color: #006838 !important; /* màu xanh đậm hơn */
+  transform: scale(1.03);
+  transition: all 0.3s ease-in-out;
+  cursor: pointer;
+}
+.pagination .page-link {
+  background-color: #212529; /* Màu nền tối */
+  color: #fff; /* Chữ trắng */
+  border: 1px solid #444; /* Viền nhẹ để tách ô */
+}
+
+.pagination .page-link:hover {
+  background-color: #28a745; /* Màu khi hover */
+  color: white;
+  border-color: #28a745;
+}
+
+.pagination .page-item.active .page-link {
+  background-color: #28a745; /* Màu của trang đang chọn */
+  border-color: #28a745;
+  color: white;
+}
+
+.pagination .page-item.disabled .page-link {
+  color: #ccc; /* Màu chữ mờ cho nút bị vô hiệu */
+  background-color: #2c2c2c;
+  border-color: #444;
+}

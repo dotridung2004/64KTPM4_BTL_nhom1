@@ -1,0 +1,80 @@
+.page2 {
+  background-color: #2b2c31;
+}
+.page2 .container {
+  padding-bottom: 50px; /* Tạo khoảng cách bên trong phần chứa card */
+}
+.card:hover {
+  background-color: #006838 !important; /* màu xanh đậm hơn */
+  transform: scale(1.03);
+  transition: all 0.3s ease-in-out;
+  cursor: pointer;
+}
+.carousel-control-prev,
+.carousel-control-next {
+  width: 5%; /* Hẹp lại nếu đang chiếm nhiều diện tích */
+  top: 35%; /* Canh giữa chiều cao sản phẩm */
+  transform: translateY(-50%);
+  opacity: 0.7;
+}
+
+.carousel-control-prev-icon,
+.carousel-control-next-icon {
+  border-radius: 50%;
+  padding: 10px;
+}
+.carousel-control-prev {
+  left: -30px;
+}
+.carousel-control-next {
+  right: -35px;
+}
+#card {
+  margin-left: 35px;
+}
+.search-offcanvas {
+  position: fixed;
+  top: 0;
+  right: -100%;
+  width: 90%;
+  max-width: 400px;
+  height: 100%;
+  background: #fff;
+  transition: right 0.6s ease;
+  z-index: 1050;
+  padding: 1rem;
+  box-shadow: -3px 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.search-offcanvas.active {
+  right: 0;
+}
+
+.back-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+}
+#form-select {
+  border-radius: 45px;
+}
+.offcanvas-header {
+  margin-top: 10px;
+  margin-left: 10px;
+}
+.offcanvas-body {
+  margin-top: 30px;
+}
+.input-group .form-control {
+  border-top-left-radius: 45px;
+  border-bottom-left-radius: 45px;
+}
+
+.input-group .btn {
+  border-top-right-radius: 45px;
+  border-bottom-right-radius: 45px;
+}
+h4 {
+  margin-top: 5px;
+  margin-left: 10px;
+}
