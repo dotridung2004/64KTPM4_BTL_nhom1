@@ -1,0 +1,32 @@
+body {
+  font-family: Arial, sans-serif;
+}
+
+.login-container {
+  background-color: #fff;
+}
+
+.left-img {
+  background: url("../img/backlogin.png") no-repeat center center;
+  background-size: cover;
+}
+
+.form-control:focus {
+  box-shadow: none;
+}
+
+.btn-login {
+  background-color: #28a745;
+  color: white;
+  width: 100%;
+}
+
+.btn-login:hover {
+  background-color: #218838;
+}
+
+.form-icon-btn {
+  width: 100%;
+  text-align: left;
+  margin-bottom: 10px;
+}

@@ -95,12 +95,7 @@
         <!-- Các thẻ card sản phẩm-->
         <div class="row row-cols-1 row-cols-sm-2 row-cols-md-4 g-4">
           <div class="col mb-4">
-            <div class="card h-100 text-center" style="background-color: black; width: 244px; height: 467px;"
-              data-id="1"
-              data-name="Thịt bò úc xay 200g"
-              data-price="38000"
-              data-image="../assets/img/product1-1.png"
-            >
+            <div class="card h-100 text-center" style="background-color: black; width: 244px; height: 467px;">
               <img src="../assets/img/product1-1.png" class="card-img-top p-2" alt="" style="height: 200px; object-fit: contain;">
               <div class="card-body text-white">
                 <br>
@@ -274,54 +269,7 @@
     <?php include '../includes/footer.php'; ?>
 
     <!-- Cập nhật giỏ hàng-->
-    <script>
-      function updateCartCount() {
-        const cart = JSON.parse(localStorage.getItem('cart')) || [];
-        document.getElementById('cart-count').textContent = cart.reduce((total, item) => total + item.quantity, 0);
-      }
-
-      document.addEventListener('DOMContentLoaded', () => {
-        updateCartCount();
-
-        document.querySelectorAll('.fa-cart-plus').forEach(button => {
-          button.addEventListener('click', () => {
-            const card = button.closest('.card');
-            const name = card.querySelector('.card-text').textContent.trim();
-            const price = card.querySelector('.fw-bold').textContent.trim();
-            const image = card.querySelector('img').getAttribute('src');
-            const quantity = parseInt(card.querySelector('span').textContent);
-
-            let cart = JSON.parse(localStorage.getItem('cart')) || [];
-            const existing = cart.find(p => p.name === name);
-
-            if (existing) {
-              existing.quantity += quantity;
-            } else {
-              cart.push({ name, price, image, quantity });
-            }
-
-            localStorage.setItem('cart', JSON.stringify(cart));
-            updateCartCount();
-          });
-        });
-
-        document.querySelectorAll('.card').forEach(card => {
-          const qtySpan = card.querySelector('span');
-          const minusBtn = card.querySelector('.btn-secondary:first-child');
-          const plusBtn = card.querySelectorAll('.btn-secondary')[1];
-
-          minusBtn?.addEventListener('click', () => {
-            let qty = parseInt(qtySpan.textContent);
-            if (qty > 1) qtySpan.textContent = qty - 1;
-          });
-
-          plusBtn?.addEventListener('click', () => {
-            let qty = parseInt(qtySpan.textContent);
-            qtySpan.textContent = qty + 1;
-          });
-        });
-      });
-    </script>
+    <script src="../assets/js/product.js"></script>
 
     <script
       src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/js/bootstrap.bundle.min.js"

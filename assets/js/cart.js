@@ -30,18 +30,62 @@ document.addEventListener("DOMContentLoaded", () => {
       total += itemTotal;
 
       const itemHTML = `
-        <div class="cart-item row mb-3 align-items-center">
-          <div class="col-md-1">
-            <input type="checkbox" class="form-check-input item-checkbox" data-index="${index}" checked />
-          </div>
-          <div class="col-md-2">
-            <img src="${item.image}" class="img-fluid" alt="${item.name}" />
-          </div>
-          <div class="col-md-3">${item.name}</div>
-          <div class="col-md-2">${item.price}</div>
-          <div class="col-md-2">Số lượng: ${item.quantity}</div>
-          <div class="col-md-2 text-end">
-            <button class="btn btn-sm btn-danger remove-btn" data-index="${index}">Xóa</button>
+        <div class="col-md-8">
+          <div class="d-flex align-items-center mb-4">
+            <!-- Checkbox bên ngoài -->
+            <div class="d-flex align-items-center px-2">
+              <input type="checkbox" class="form-check-input item-checkbox" data-index="${index}" checked style="width: 24px; height: 24px;background-color: green; border-color: black" />
+            </div>
+
+            <!-- Nội dung chính của sản phẩm -->
+            <div class="cart-item bg-black text-white p-3 rounded flex-grow-1">
+              <div class="d-flex">
+                <!-- Hình ảnh sản phẩm -->
+                <div style="margin-right:30px;margin-left:30px">
+                  <img src="${
+                    item.image
+                  }" class="img-fluid rounded me-3" style="width: 120px; height: 120px; object-fit: cover" alt="${
+        item.name
+      }" />
+                </div>
+
+                <!-- Thông tin sản phẩm -->
+                <div class="flex-grow-1">
+                  <div class="d-flex justify-content-between">
+                    <div>
+                      <h5 class="fw-bold mb-1" style="font-size:24px">${
+                        item.name
+                      }</h5>
+                      <div class="text-success mb-2" style="font-size:24px">${item.price.toLocaleString(
+                        "vi-VN"
+                      )}đ</div>
+                      <div class="d-flex align-items-center gap-2 mb-2">
+                        <button class="btn btn-outline-light btn-sm quantity-btn" data-index="${index}" data-action="decrease">-</button>
+                        <span>${item.quantity}</span>
+                        <button class="btn btn-outline-light btn-sm quantity-btn" data-index="${index}" data-action="increase">+</button>
+                      </div>
+                      <hr class="text-white my-2" />
+                      <div class="fw-bold fs-5" >${(
+                        parseInt(item.price.replace(/[^\d]/g, "")) *
+                        item.quantity
+                      ).toLocaleString("vi-VN")}đ</div>
+                    </div>
+
+                    <!-- Icon yêu thích và xóa -->
+                    <div class="d-flex flex-column">
+                      <button class="btn btn-link text-white fs-5" style="margin-left:250px">
+                        <i class="fa-regular fa-heart fa-xl"></i>
+                      </button>
+
+                      <!-- Icon thùng rác góc dưới phải -->
+                      <button class="btn btn-link text-white fs-5 remove-btn" style="margin-top:100px;margin-left:250px"data-index="${index}">
+                        <i class="fa-solid fa-trash-can fa-xl"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       `;
@@ -132,4 +176,89 @@ document.addEventListener("DOMContentLoaded", () => {
 
   renderCart();
   updateTotalPrice();
+
+  // Xử lý bấm trái tim (thêm/bỏ yêu thích)
+  cartItemsContainer.addEventListener("click", (e) => {
+    const heartIcon = e.target.closest(".fa-heart");
+
+    if (heartIcon) {
+      if (
+        heartIcon.classList.contains("fa-solid") &&
+        heartIcon.classList.contains("text-danger")
+      ) {
+        // Nếu đã yêu thích -> bỏ yêu thích
+        heartIcon.classList.remove("fa-solid", "text-danger");
+        heartIcon.classList.add("fa-regular");
+      } else {
+        // Nếu chưa yêu thích -> thêm yêu thích
+        heartIcon.classList.remove("fa-regular");
+        heartIcon.classList.add("fa-solid", "text-danger");
+
+        // Hiện modal yêu thích
+        const favoriteModal = new bootstrap.Modal(
+          document.getElementById("favoriteModal")
+        );
+        favoriteModal.show();
+      }
+    }
+  });
+
+  // Xử lý bấm icon thùng rác
+  let itemToDeleteIndex = null;
+
+  cartItemsContainer.addEventListener("click", (e) => {
+    const trashIcon = e.target.closest(".fa-trash-can");
+    if (trashIcon) {
+      itemToDeleteIndex = trashIcon.closest("button")?.dataset.index;
+
+      const deleteModal = new bootstrap.Modal(
+        document.getElementById("confirmDeleteModal")
+      );
+      deleteModal.show();
+    }
+  });
+
+  // Xử lý xác nhận xóa trong modal
+  document.getElementById("confirmDeleteBtn").addEventListener("click", () => {
+    if (itemToDeleteIndex !== null) {
+      cart.splice(itemToDeleteIndex, 1);
+      localStorage.setItem("cart", JSON.stringify(cart));
+      renderCart();
+      updateTotalPrice();
+      itemToDeleteIndex = null;
+    }
+    const deleteModal = bootstrap.Modal.getInstance(
+      document.getElementById("confirmDeleteModal")
+    );
+    deleteModal.hide();
+  });
+
+  // Xử lý tăng/giảm số lượng sản phẩm
+  cartItemsContainer.addEventListener("click", (e) => {
+    const btn = e.target.closest(".quantity-btn");
+    if (btn) {
+      const index = parseInt(btn.dataset.index);
+      const action = btn.dataset.action;
+
+      if (action === "increase") {
+        cart[index].quantity++;
+      } else if (action === "decrease") {
+        if (cart[index].quantity > 1) {
+          cart[index].quantity--;
+        } else {
+          return; // Không giảm xuống dưới 1
+        }
+      }
+
+      localStorage.setItem("cart", JSON.stringify(cart));
+      renderCart();
+      updateTotalPrice();
+
+      // Hiển thị modal cập nhật thành công
+      const updateModal = new bootstrap.Modal(
+        document.getElementById("updateSuccessModal")
+      );
+      updateModal.show();
+    }
+  });
 });

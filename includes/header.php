@@ -55,7 +55,7 @@
             </a>
           </li>
           <li class="nav-item" id="nav-item">
-            <a class="nav-link" aria-current="page" href="#">
+            <a class="nav-link" aria-current="page" href="../pages/login.php">
               <i class="fa-solid fa-user"></i>
             </a>
           </li>

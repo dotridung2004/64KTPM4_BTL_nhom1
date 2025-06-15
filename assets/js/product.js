@@ -47,15 +47,3 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 });
-const openBtn = document.getElementById("openSearchBtn");
-const closeBtn = document.getElementById("closeSearch");
-const offcanvas = document.getElementById("searchOffcanvas");
-
-openBtn.addEventListener("click", (e) => {
-  e.preventDefault();
-  offcanvas.classList.add("active");
-});
-
-closeBtn.addEventListener("click", () => {
-  offcanvas.classList.remove("active");
-});

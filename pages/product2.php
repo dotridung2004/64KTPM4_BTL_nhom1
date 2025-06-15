@@ -268,20 +268,7 @@
 
     <?php include '../includes/footer.php'; ?>
 
-    <!-- Cập nhật giỏ hàng-->
-    <script>
-      // Lấy giỏ hàng từ localStorage (nếu có)
-      let cartCount = localStorage.getItem('cartCount') || 0;
-      document.getElementById('cart-count').textContent = cartCount;
-
-      document.querySelectorAll('.fa-cart-plus').forEach(button => {
-        button.addEventListener('click', () => {
-          cartCount++;
-          document.getElementById('cart-count').textContent = cartCount;
-          localStorage.setItem('cartCount', cartCount);
-        });
-      });
-    </script>
+    <script src="../assets/js/product.js"></script>
 
     <script
       src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/js/bootstrap.bundle.min.js"
