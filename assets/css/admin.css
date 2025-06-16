@@ -1,0 +1,35 @@
+body {
+  background-color: #2b2c31;
+  color: white;
+}
+.sidebar {
+  background-color: white;
+  color: black;
+  border-radius: 5px;
+  min-height: 100%;
+  padding: 20px;
+  width: 250px;
+}
+.sidebar img {
+  width: 120px;
+  display: block;
+  margin: 0 auto 20px auto;
+}
+.sidebar a {
+  color: black;
+  text-decoration: none;
+  display: block;
+  margin-bottom: 15px;
+}
+.sidebar a:hover {
+  text-decoration: underline;
+}
+.topbar {
+  padding: 20px 0;
+  border-bottom: 1px solid #444;
+}
+.topbar .icons i {
+  color: white;
+  margin-left: 20px;
+  cursor: pointer;
+}

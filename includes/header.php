@@ -66,6 +66,11 @@
               </span>
             </a>
           </li>
+          <li class="nav-item" id="nav-item">
+            <a class="nav-link" aria-current="page" href="../pages/login.php">
+              <i class="fa-solid fa-heart"></i>
+            </a>
+          </li>
         </ul>
       </nav>
     </div>
