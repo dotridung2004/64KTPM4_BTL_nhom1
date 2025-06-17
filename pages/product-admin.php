@@ -27,7 +27,7 @@
                 <div class="sidebar">
                     <img src="../assets/img/logo.png" alt="HomeFood Logo">
                     <a href="#" class="active">Quản lý sản phẩm</a>
-                    <a href="#">Quản lý đánh giá sản phẩm</a>
+                    <a href="comment-admin.php">Quản lý đánh giá sản phẩm</a>
                     <a href="#">Chương trình khuyến mãi</a>
                     <a href="#">Tin tức</a>
                 </div>
@@ -49,7 +49,7 @@
                             <div class="price">Giá: 103.000đ</div>
                         </div>
                         <div class="actions">
-                            <a href="#" class="edit edit-btn" data-id="product-1">Sửa</a>
+                            <a href="#" class="edit edit-btn" data-bs-toggle="modal" data-bs-target="#editProductModal" data-id="product-1">Sửa</a>
                             <a href="#" class="delete delete-btn" data-id="product-1">Xóa</a>
                         </div>
                     </div>
@@ -64,7 +64,7 @@
                             <div class="price">Giá: 118.000đ</div>
                         </div>
                         <div class="actions">
-                            <a href="#" class="edit edit-btn" data-id="product-2">Sửa</a>
+                            <a href="#" class="edit edit-btn" data-bs-toggle="modal" data-bs-target="#editProductModal" data-id="product-2">Sửa</a>
                             <a href="#" class="delete delete-btn" data-id="product-2">Xóa</a>
                         </div>
                     </div>
@@ -79,7 +79,7 @@
                             <div class="price">Giá: 103.000đ</div>
                         </div>
                         <div class="actions">
-                            <a href="#" class="edit edit-btn" data-id="product-3">Sửa</a>
+                            <a href="#" class="edit edit-btn" data-bs-toggle="modal" data-bs-target="#editProductModal" data-id="product-3">Sửa</a>
                             <a href="#" class="delete delete-btn" data-id="product-3">Xóa</a>
                         </div>
                     </div>
@@ -93,7 +93,7 @@
                             <div class="price">Giá: 103.000đ</div>
                         </div>
                         <div class="actions">
-                            <a href="#" class="edit edit-btn" data-id="product-4">Sửa</a>
+                            <a href="#" class="edit edit-btn" data-bs-toggle="modal" data-bs-target="#editProductModal" data-id="product-4">Sửa</a>
                             <a href="#" class="delete delete-btn" data-id="product-4">Xóa</a>
                         </div>
                     </div>
@@ -107,7 +107,7 @@
                             <div class="price">Giá: 103.000đ</div>
                         </div>
                         <div class="actions">
-                            <a href="#" class="edit edit-btn" data-id="product-5">Sửa</a>
+                            <a href="#" class="edit edit-btn" data-bs-toggle="modal" data-bs-target="#editProductModal" data-id="product-5">Sửa</a>
                             <a href="#" class="delete delete-btn" data-id="product-5">Xóa</a>
                         </div>
                     </div>
@@ -190,21 +190,88 @@
         </div>
     </div>
 
+    <div class="modal fade" id="editProductModal" tabindex="-1" aria-labelledby="editProductLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content rounded-4" style="background-color: #e4e4e4;">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title w-100 text-center fw-bold text-danger" id="editModalTitle">Sửa thông tin sản phẩm</h5>
+                </div>
+                <div class="modal-body">
+                    <form id="editProductForm">
+                        <input type="hidden" id="editProductId"> <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Tên sản phẩm:</label>
+                                <input type="text" id="editProductName" class="form-control" placeholder="Nhập tên sản phẩm">
+                                <div class="invalid-feedback" id="editProductNameError">Không được bỏ trống trường này</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Số lượng:</label>
+                                <input type="number" id="editProductQuantity" class="form-control" placeholder="Nhập số lượng sản phẩm" min="1">
+                                <div class="invalid-feedback" id="editProductQuantityError">Không được bỏ trống và phải là số nguyên dương</div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Mô tả sản phẩm:</label>
+                            <textarea class="form-control" id="editProductDesc" rows="4" placeholder="Nhập mô tả sản phẩm..."></textarea>
+                            <div class="invalid-feedback" id="editProductDescError">Không được bỏ trống trường này</div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label class="form-label">Giá:</label>
+                                <input type="number" id="editProductPrice" class="form-control" min="0">
+                                <div class="invalid-feedback" id="editProductPriceError">Không được bỏ trống và phải lớn hơn 0</div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Danh mục:</label>
+                                <select id="editProductCategory" class="form-select">
+                                    <option value="">Chọn danh mục</option>
+                                    <option>Thịt-Cá-Trứng-Thủy hải sản</option>
+                                    <option>Sản phẩm đông lạnh</option>
+                                    <option>Rau củ quả</option>
+                                </select>
+                                <div class="invalid-feedback" id="editProductCategoryError">Vui lòng chọn danh mục</div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Thương hiệu:</label>
+                                <input type="text" id="editProductBrand" class="form-control" placeholder="Thương hiệu">
+                                <div class="invalid-feedback" id="editProductBrandError">Không được bỏ trống trường này</div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Hình ảnh hiện tại:</label><br>
+                            <img id="editCurrentProductImage" src="" alt="Ảnh sản phẩm hiện tại" class="mt-2" style="max-width: 150px;">
+                            <label class="form-label mt-3">Chọn hình ảnh mới (nếu muốn thay đổi):</label><br>
+                            <input type="file" id="editProductImage" class="form-control w-50">
+                            <div class="invalid-feedback" id="editProductImageError">Vui lòng chọn hình ảnh</div>
+                        </div>
+
+                        <div class="d-flex justify-content-center gap-4 mt-4">
+                            <button type="submit" class="btn btn-success px-5 rounded-pill">Lưu thay đổi</button>
+                            <button type="button" class="btn btn-outline-danger px-5 rounded-pill" data-bs-dismiss="modal">Hủy</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <div class="modal-header bg-success text-white"> <h5 class="modal-title w-100 text-center" id="successModalLabel">Thành công!</h5>
+                <div class="modal-header text-black fw-bold"> <h5 class="modal-title" id="successModalLabel">Thông báo !</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body text-center">
-                    <i class="fas fa-check-circle text-success fs-1 mb-3"></i> <p class="mb-0" id="successMessage">Đã thêm sản phẩm mới thành công!</p> </div>
-                <div class="modal-footer justify-content-center border-0"> <button type="button" class="btn btn-success" data-bs-dismiss="modal">Đóng</button>
+                <div class="modal-body">
+                    <p class="mb-0" id="successMessage">Thêm sản phẩm thành công.</p></div>
+                    <div class="modal-footer"> <button type="button" class="btn btn-success text-white" data-bs-dismiss="modal">Đóng</button>
                 </div>
             </div>
         </div>
     </div>
 
-   <div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
+    <div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header text-black">
@@ -212,28 +279,25 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body text-black">
-                    <p>Bạn có chắc chắn muốn xóa sản phẩm này không?</p>
+                    <p>Bạn có chắc chắn muốn xóa sản phẩm ?</p>
                     <input type="hidden" id="productIdToDelete"> </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-success text-white" id="confirmDeleteBtn">Xác nhận</button>
                     <button type="button" class="btn btn-outline-danger" data-bs-dismiss="modal">Hủy</button>
-
                 </div>
             </div>
         </div>
     </div>
-
-
     <?php include '../includes/footer.php' ?>
     <script
         src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-j1CDi7MgGQ12Z7Qab0qlWQ/Qqz24Gc6BM0thvEMVjHnfYGF0rmFCozFSxQBxwHKO"
         crossorigin="anonymous"
     ></script>
+    <script src="../assets/js/product-admin.js"></script>
     <script
         src="https://kit.fontawesome.com/99651229fa.js"
         crossorigin="anonymous"
     ></script>
-    <script src="../assets/js/product-admin.js"></script>
 </body>
 </html>

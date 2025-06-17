@@ -38,7 +38,7 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
             <div class="sidebar">
             <img src="../assets/img/logo.png" alt="HomeFood Logo">
             <a href="product-admin.php">Quản lý sản phẩm</a>
-            <a href="#">Quản lý đánh giá sản phẩm</a>
+            <a href="comment-admin.php">Quản lý đánh giá sản phẩm</a>
             <a href="#">Chương trình khuyến mãi</a>
             <a href="#">Tin tức</a>
             </div>

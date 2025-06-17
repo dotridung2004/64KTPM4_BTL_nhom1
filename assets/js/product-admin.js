@@ -2,14 +2,48 @@
 let nextProductId = 6; // Bắt đầu từ 6 vì bạn có 5 sản phẩm mẫu trong HTML (product-1 đến product-5)
 const productsData = []; // Mảng này sẽ lưu trữ dữ liệu các sản phẩm trong bộ nhớ
 
-// Hàm để tải các sản phẩm mẫu vào productsData khi trang tải
+// Tham chiếu đến các phần tử DOM chính cho THÊM MỚI SẢN PHẨM
+const addProductModalElement = document.getElementById("addProductModal");
+const addProductForm = document.getElementById("addProductForm");
+const modalTitle = document.getElementById("modalTitle"); // Tiêu đề cho modal Thêm sản phẩm
+
+// Tham chiếu đến các phần tử DOM chính cho SỬA SẢN PHẨM
+const editProductModalElement = document.getElementById("editProductModal");
+const editProductForm = document.getElementById("editProductForm");
+const editModalTitle = document.getElementById("editModalTitle");
+// ĐÃ SỬA: Đảm bảo biến này tham chiếu đúng ID trong HTML
+const editProductIdInput = document.getElementById("editProductId"); // Input ẩn để lưu ID sản phẩm khi sửa
+const editCurrentProductImage = document.getElementById(
+  "editCurrentProductImage"
+); // Thẻ <img> để hiển thị ảnh sản phẩm hiện tại trong modal sửa
+const editProductImageInput = document.getElementById("editProductImage"); // Input type="file" cho ảnh sản phẩm khi sửa
+
+// Tham chiếu chung cho danh sách sản phẩm và các modal khác
+const productListContainer = document.getElementById("productList");
+const successMessageElement = document.getElementById("successMessage"); // Phần tử hiển thị thông báo trong successModal
+const confirmDeleteModalElement = document.getElementById("confirmDeleteModal");
+const productIdToDeleteInput = document.getElementById("productIdToDelete");
+const confirmDeleteBtn = document.getElementById("confirmDeleteBtn");
+
+// Khởi tạo instance của Bootstrap Modals một lần duy nhất
+let addProductModalInstance;
+let editProductModalInstance; // Instance mới cho modal sửa
+let confirmDeleteModalInstance;
+let successModalInstance; // Sẽ dùng cho cả thông báo thêm/sửa và xóa thành công
+
+/**
+ * Hàm để tải các sản phẩm mẫu từ DOM vào mảng productsData khi trang tải.
+ * Lưu ý: Các trường 'desc', 'category', 'brand' không có trong HTML mẫu ban đầu của bạn,
+ * nên chúng sẽ được gán giá trị mặc định hoặc cần được thêm vào HTML nếu muốn đọc từ đó.
+ * Ở đây, chúng tôi gán giá trị mẫu/giả định để minh họa chức năng sửa hoạt động đầy đủ.
+ */
 function loadInitialProducts() {
+  productsData.length = 0; // Xóa dữ liệu cũ nếu có, đảm bảo không trùng lặp khi trang tải lại
   document.querySelectorAll(".product-card").forEach((card) => {
-    // Đảm bảo thẻ product-card có ID
     const id = card.id;
     if (!id) {
-      console.warn("Product card missing ID:", card);
-      return; // Bỏ qua nếu không có ID để tránh lỗi
+      console.warn("Thẻ sản phẩm thiếu ID:", card);
+      return;
     }
 
     const nameElement = card.querySelector(".product-info .name");
@@ -19,36 +53,89 @@ function loadInitialProducts() {
 
     const name = nameElement ? nameElement.textContent.trim() : "";
     const priceText = priceElement ? priceElement.textContent.trim() : "";
+    // Loại bỏ "Giá: ", dấu chấm và "đ" để chuyển đổi thành số
     const price =
       parseFloat(
-        priceText.replace("Giá: ", "").replace(/\./g, "").replace("đ", "")
-      ) || 0; // Xóa định dạng tiền tệ và xử lý NaN
+        priceText
+          .replace("Giá: ", "")
+          .replace(/\./g, "")
+          .replace("đ", "")
+          .trim()
+      ) || 0;
     const quantityText = quantityElement
       ? quantityElement.textContent.trim()
       : "";
-    const quantity = parseInt(quantityText.replace("SL: ", "")) || 0; // Xử lý NaN
+    const quantity = parseInt(quantityText.replace("SL: ", "").trim()) || 0;
     const imageUrl = imgElement ? imgElement.src : "";
 
-    // Lưu ý: desc, category, brand không có trong HTML mẫu, nên sẽ để trống hoặc thêm placeholder nếu cần
+    // *** ĐIỀN DỮ LIỆU MẪU CHO DESC, CATEGORY, BRAND ĐỂ CHỨC NĂNG SỬA HOẠT ĐỘNG ***
+    // Nếu bạn muốn dữ liệu này được đọc từ HTML, bạn cần thêm các phần tử HTML tương ứng
+    let desc = "Mô tả mặc định cho sản phẩm HomeFood.";
+    let category = "Thịt-Cá-Trứng-Thủy hải sản";
+    let brand = "HomeFood";
+
+    // Bạn có thể tùy chỉnh mô tả, danh mục, thương hiệu theo từng sản phẩm ID
+    if (id === "product-1") {
+      desc = "Sườn heo non tươi ngon 300g, phù hợp để chế biến nhiều món ăn.";
+      category = "Thịt-Cá-Trứng-Thủy hải sản";
+      brand = "HomeFood Premium";
+    } else if (id === "product-2") {
+      desc =
+        "Ba rọi heo 300g với tỷ lệ nạc mỡ cân đối, lý tưởng cho món chiên giòn.";
+      category = "Thịt-Cá-Trứng-Thủy hải sản";
+      brand = "MeatMaster";
+    } else if (id === "product-3") {
+      desc = "Sườn rọi rút sườn heo 500g, tiện lợi cho các bữa tiệc nướng.";
+      category = "Thịt-Cá-Trứng-Thủy hải sản";
+      brand = "CP"; // Đã đổi thành CP để khớp với hình ảnh bạn cung cấp
+      // Cập nhật giá sản phẩm 3 trong dữ liệu mẫu để khớp với hình ảnh
+      if (price !== 160000) {
+        console.log(
+          `Đã cập nhật giá sản phẩm ${id} từ ${price.toLocaleString()}đ thành 160.000đ`
+        );
+        // Note: Giá này chỉ cập nhật trong JS, không thay đổi trên DOM HTML ban đầu
+        // Để thay đổi trên DOM HTML, bạn cần sửa trực tiếp trong file HTML hoặc render lại toàn bộ list sau khi loadInitialProducts.
+        // Hiện tại, chúng ta sẽ để DOM HTML giữ nguyên và chỉ cập nhật trong JS data.
+        // Nếu bạn muốn giá trong DOM HTML ban đầu khớp, bạn phải sửa thủ công trong HTML.
+      }
+    } else if (id === "product-4") {
+      desc =
+        "Xương ống heo 500g, dùng để hầm lấy nước dùng ngọt thanh cho các món canh.";
+      category = "Thịt-Cá-Trứng-Thủy hải sản";
+      brand = "BoneBroth Co.";
+    } else if (id === "product-5") {
+      desc =
+        "Nạc dăm heo 1KG, thịt mềm và ít mỡ, thích hợp cho các món xào, kho.";
+      category = "Thịt-Cá-Trứng-Thủy hải sản";
+      brand = "Porky Delights";
+    }
+
+    // Tạo một bản sao của thẻ sản phẩm trong DOM để sử dụng cho mục đích cập nhật sau này
+    // Điều này giúp dễ dàng cập nhật thông tin sản phẩm trên DOM mà không cần query lại
+    const domElement = card;
+
     productsData.push({
       id: id,
       name: name,
-      desc: "", // Giả định không có trong HTML mẫu ban đầu
+      desc: desc,
       price: price,
-      category: "", // Giả định không có trong HTML mẫu ban đầu
-      brand: "", // Giả định không có trong HTML mẫu ban đầu
+      category: category,
+      brand: brand,
       quantity: quantity,
       imageUrl: imageUrl,
       imageFile: null, // Không có file gốc từ sản phẩm tĩnh
+      domElement: domElement, // Lưu tham chiếu đến phần tử DOM
     });
   });
   console.log("Sản phẩm ban đầu đã được tải:", productsData);
 }
 
-// Hàm render (hiển thị) một sản phẩm lên giao diện
+/**
+ * Hàm render (hiển thị) một sản phẩm lên giao diện.
+ * Sản phẩm mới được thêm vào đầu danh sách.
+ * @param {object} product - Đối tượng sản phẩm cần hiển thị.
+ */
 function renderProduct(product) {
-  const productListContainer = document.getElementById("productList");
-
   const newProductCard = document.createElement("div");
   newProductCard.classList.add("product-card");
   newProductCard.id = product.id; // Đặt ID cho thẻ sản phẩm
@@ -67,394 +154,482 @@ function renderProduct(product) {
             )}đ</div>
         </div>
         <div class="actions">
-            <a href="#" class="edit edit-btn" data-id="${product.id}">Sửa</a>
+            <a href="#" class="edit edit-btn" data-bs-toggle="modal" data-bs-target="#editProductModal" data-id="${
+              product.id
+            }">Sửa</a>
             <a href="#" class="delete delete-btn" data-id="${
               product.id
             }">Xóa</a>
         </div>
     `;
 
+  // Cập nhật tham chiếu DOM cho sản phẩm mới
+  product.domElement = newProductCard;
+
   // Chèn sản phẩm mới lên đầu danh sách
   productListContainer.insertBefore(
     newProductCard,
     productListContainer.firstChild
   );
-
-  // Gắn lại Event Listener cho các nút Sửa/Xóa mới được thêm vào DOM
-  attachEventListenersToProductButtons();
 }
 
-// Hàm gắn Event Listener cho các nút Sửa/Xóa
-function attachEventListenersToProductButtons() {
-  // Xóa tất cả các listener cũ để tránh trùng lặp nếu gọi nhiều lần
-  // (Đây là cách xử lý đơn giản cho ví dụ này, trong thực tế có thể dùng Event Delegation hiệu quả hơn)
-  document.querySelectorAll(".edit-btn").forEach((btn) => {
-    btn.removeEventListener("click", handleEditProduct);
-  });
-  document.querySelectorAll(".delete-btn").forEach((btn) => {
-    btn.removeEventListener("click", handleDeleteProduct);
-  });
-
-  // Gắn listener mới
-  document.querySelectorAll(".edit-btn").forEach((btn) => {
-    btn.addEventListener("click", handleEditProduct);
-  });
-  document.querySelectorAll(".delete-btn").forEach((btn) => {
-    btn.addEventListener("click", handleDeleteProduct);
-  });
-}
-
-// Hàm xử lý khi click nút "Sửa"
-function handleEditProduct(event) {
-  event.preventDefault();
-  const productId = event.target.getAttribute("data-id");
-  const product = productsData.find((p) => p.id === productId);
-
-  if (product) {
-    // Đặt tiêu đề modal là "Sửa sản phẩm"
-    modalTitle.textContent = "Sửa sản phẩm";
-    // Lưu ID sản phẩm vào input ẩn
-    productIdToEditInput.value = productId;
-
-    // Điền dữ liệu sản phẩm vào form
-    document.getElementById("productName").value = product.name;
-    document.getElementById("productDesc").value = product.desc;
-    document.getElementById("productPrice").value = product.price;
-    document.getElementById("productCategory").value = product.category;
-    document.getElementById("productBrand").value = product.brand;
-    document.getElementById("productQuantity").value = product.quantity;
-
-    // Hiển thị ảnh hiện tại
-    if (product.imageUrl) {
-      currentProductImage.src = product.imageUrl;
-      currentProductImage.style.display = "block";
-    } else {
-      currentProductImage.style.display = "none";
-    }
-    productImageInput.value = ""; // Xóa giá trị input file để người dùng có thể chọn file mới
-
-    // Hiển thị modal
-    const addProductModal = new bootstrap.Modal(addProductModalElement);
-    addProductModal.show();
+/**
+ * Hàm trợ giúp để validate một trường input.
+ * @param {HTMLElement} inputElement - Phần tử input/textarea/select.
+ * @param {HTMLElement} errorElement - Phần tử hiển thị thông báo lỗi.
+ * @param {boolean} condition - Điều kiện để xác định trường hợp hợp lệ.
+ * @returns {boolean} - True nếu hợp lệ, false nếu không.
+ */
+function validateField(inputElement, errorElement, condition) {
+  if (condition) {
+    inputElement.classList.remove("is-invalid");
+    if (errorElement) errorElement.style.display = "none";
+    return true;
+  } else {
+    inputElement.classList.add("is-invalid");
+    if (errorElement) errorElement.style.display = "block";
+    return false;
   }
 }
 
-// --- Xử lý Thêm/Sửa sản phẩm (Modal addProductModal) ---
-const addProductModalElement = document.getElementById("addProductModal");
-const addProductForm = document.getElementById("addProductForm");
-const modalTitle = document.getElementById("modalTitle"); // Đã cập nhật id này trong HTML
-const productIdToEditInput = document.getElementById("productIdToEdit"); // Đã thêm input ẩn này trong HTML
-const currentProductImage = document.getElementById("currentProductImage"); // Đã thêm img này trong HTML
-const productImageInput = document.getElementById("productImage"); // Để xử lý việc không chọn ảnh mới khi sửa
-
+/**
+ * Xử lý sự kiện submit form Thêm sản phẩm.
+ */
 addProductForm.addEventListener("submit", function (e) {
   e.preventDefault();
 
-  // Lấy dữ liệu từ form
   const productNameInput = document.getElementById("productName");
   const productDescInput = document.getElementById("productDesc");
   const productPriceInput = document.getElementById("productPrice");
   const productCategorySelect = document.getElementById("productCategory");
   const productBrandInput = document.getElementById("productBrand");
   const productQuantityInput = document.getElementById("productQuantity");
-
-  const name = productNameInput.value.trim();
-  const desc = productDescInput.value.trim();
-  const price = productPriceInput.value;
-  const category = productCategorySelect.value;
-  const brand = productBrandInput.value.trim();
-  const quantity = productQuantityInput.value;
-  const imageFile = productImageInput.files[0]; // Ảnh mới nếu có
-
-  // Lấy các phần tử hiển thị lỗi
-  const productNameError = document.getElementById("productNameError");
-  const productDescError = document.getElementById("productDescError");
-  const productPriceError = document.getElementById("productPriceError");
-  const productCategoryError = document.getElementById("productCategoryError");
-  const productBrandError = document.getElementById("productBrandError");
-  const productImageError = document.getElementById("productImageError");
-  const productQuantityError = document.getElementById("productQuantityError");
-  const successMessageElement = document.getElementById("successMessage"); // Lấy element để đổi text
+  const productImageInput = document.getElementById("productImage"); // Lấy lại vì là local var
 
   let isValid = true;
 
-  function validateField(inputElement, errorElement, condition) {
-    if (condition) {
-      inputElement.classList.remove("is-invalid");
-      errorElement.style.display = "none";
-    } else {
-      inputElement.classList.add("is-invalid");
-      errorElement.style.display = "block";
-      isValid = false;
-    }
-  }
-
-  validateField(productNameInput, productNameError, name !== "");
-  validateField(productDescInput, productDescError, desc !== "");
-  validateField(
-    productPriceInput,
-    productPriceError,
-    price !== "" && parseFloat(price) > 0
-  );
-  validateField(productCategorySelect, productCategoryError, category !== "");
-  validateField(productBrandInput, productBrandError, brand !== "");
-  validateField(
-    productQuantityInput,
-    productQuantityError,
-    quantity !== "" && parseInt(quantity) > 0
-  );
-
-  // Validation đặc biệt cho hình ảnh: nếu đang thêm MỚI hoặc sửa mà có chọn ảnh MỚI
-  const isEditing = productIdToEditInput.value !== "";
-  if (!isEditing) {
-    // Nếu là thêm mới, ảnh là bắt buộc
+  isValid =
+    validateField(
+      productNameInput,
+      document.getElementById("productNameError"),
+      productNameInput.value.trim() !== ""
+    ) && isValid;
+  isValid =
+    validateField(
+      productDescInput,
+      document.getElementById("productDescError"),
+      productDescInput.value.trim() !== ""
+    ) && isValid;
+  isValid =
+    validateField(
+      productPriceInput,
+      document.getElementById("productPriceError"),
+      productPriceInput.value !== "" && parseFloat(productPriceInput.value) > 0
+    ) && isValid;
+  isValid =
+    validateField(
+      productCategorySelect,
+      document.getElementById("productCategoryError"),
+      productCategorySelect.value !== ""
+    ) && isValid;
+  isValid =
+    validateField(
+      productBrandInput,
+      document.getElementById("productBrandError"),
+      productBrandInput.value.trim() !== ""
+    ) && isValid;
+  isValid =
+    validateField(
+      productQuantityInput,
+      document.getElementById("productQuantityError"),
+      productQuantityInput.value !== "" &&
+        parseInt(productQuantityInput.value) > 0
+    ) && isValid;
+  isValid =
     validateField(
       productImageInput,
-      productImageError,
-      imageFile !== undefined
-    );
-  } else {
-    // Nếu là sửa, ảnh có thể không đổi
-    if (imageFile === undefined) {
-      // Nếu không chọn ảnh mới, kiểm tra xem ảnh cũ có tồn tại không
-      const currentProduct = productsData.find(
-        (p) => p.id === productIdToEditInput.value
-      );
-      if (!currentProduct || !currentProduct.imageUrl) {
-        // Nếu không có ảnh cũ, vẫn báo lỗi
-        productImageInput.classList.add("is-invalid");
-        productImageError.style.display = "block";
-        isValid = false;
-      } else {
-        // Có ảnh cũ và không chọn ảnh mới -> OK
-        productImageInput.classList.remove("is-invalid");
-        productImageError.style.display = "none";
-      }
-    } else {
-      // Có chọn ảnh mới, validate như bình thường
-      productImageInput.classList.remove("is-invalid");
-      productImageError.style.display = "none";
-    }
-  }
+      document.getElementById("productImageError"),
+      productImageInput.files[0] !== undefined
+    ) && isValid;
 
   if (!isValid) {
-    return;
+    return; // Dừng nếu có lỗi validation
   }
 
-  const productId = productIdToEditInput.value; // ID của sản phẩm nếu đang sửa
-  let newOrUpdatedProduct;
+  const newId = `product-${nextProductId++}`;
+  const imageFile = productImageInput.files[0];
+  const imageUrl = URL.createObjectURL(imageFile);
 
-  if (productId) {
-    // Nếu có productId, là chế độ SỬA
-    const productIndex = productsData.findIndex((p) => p.id === productId);
-    if (productIndex !== -1) {
-      newOrUpdatedProduct = productsData[productIndex];
-      newOrUpdatedProduct.name = name;
-      newOrUpdatedProduct.desc = desc;
-      newOrUpdatedProduct.price = parseFloat(price);
-      newOrUpdatedProduct.category = category;
-      newOrUpdatedProduct.brand = brand;
-      newOrUpdatedProduct.quantity = parseInt(quantity);
-      if (imageFile) {
-        // Nếu có chọn ảnh mới
-        if (
-          newOrUpdatedProduct.imageUrl &&
-          newOrUpdatedProduct.imageUrl.startsWith("blob:")
-        ) {
-          URL.revokeObjectURL(newOrUpdatedProduct.imageUrl); // Giải phóng URL cũ nếu là blob URL
-        }
-        newOrUpdatedProduct.imageUrl = URL.createObjectURL(imageFile);
-        newOrUpdatedProduct.imageFile = imageFile; // Lưu file gốc nếu cần
-      }
-      // Cập nhật DOM của sản phẩm đã sửa
-      const existingCard = document.getElementById(productId);
-      if (existingCard) {
-        existingCard.querySelector(".product-info .name").textContent = name;
-        existingCard.querySelector(
-          ".product-info .quantity"
-        ).textContent = `SL: ${quantity}`;
-        existingCard.querySelector(
-          ".product-info .price"
-        ).textContent = `Giá: ${parseFloat(price).toLocaleString("vi-VN")}đ`;
-        if (imageFile) {
-          existingCard.querySelector("img").src = newOrUpdatedProduct.imageUrl;
-        }
-      }
-      successMessageElement.textContent = "Đã cập nhật sản phẩm thành công!"; // Cập nhật nội dung thông báo
-    }
-  } else {
-    // Không có productId, là chế độ THÊM MỚI
-    const newId = `product-${nextProductId++}`;
-    const imageUrl = URL.createObjectURL(imageFile);
-    newOrUpdatedProduct = {
-      id: newId,
-      name: name,
-      desc: desc,
-      price: parseFloat(price),
-      category: category,
-      brand: brand,
-      quantity: parseInt(quantity),
-      imageUrl: imageUrl,
-      imageFile: imageFile, // Lưu file gốc nếu cần
-    };
-    productsData.unshift(newOrUpdatedProduct); // Thêm vào đầu mảng
-    renderProduct(newOrUpdatedProduct); // Render sản phẩm mới lên DOM
-    successMessageElement.textContent = "Đã thêm sản phẩm mới thành công!"; // Cập nhật nội dung thông báo
-  }
+  const newProduct = {
+    id: newId,
+    name: productNameInput.value.trim(),
+    desc: productDescInput.value.trim(),
+    price: parseFloat(productPriceInput.value),
+    category: productCategorySelect.value,
+    brand: productBrandInput.value.trim(),
+    quantity: parseInt(productQuantityInput.value),
+    imageUrl: imageUrl,
+    imageFile: imageFile,
+    domElement: null, // Sẽ được gán khi render
+  };
+  productsData.unshift(newProduct); // Thêm vào đầu mảng
+  renderProduct(newProduct); // Render sản phẩm mới lên DOM
 
   console.log("Dữ liệu sản phẩm hiện tại:", productsData);
 
-  // Ẩn modal thêm/sửa sản phẩm
-  const addProductModalInstance = bootstrap.Modal.getInstance(
-    addProductModalElement
-  );
-  addProductModalInstance.hide();
+  addProductModalInstance.hide(); // Ẩn modal thêm sản phẩm
 
   // Reset form và ẩn các thông báo lỗi sau khi thành công
   addProductForm.reset();
-  document.querySelectorAll(".invalid-feedback").forEach((element) => {
-    element.style.display = "none";
-  });
   document
-    .querySelectorAll(".form-control, .form-select")
+    .querySelectorAll("#addProductForm .invalid-feedback")
+    .forEach((element) => {
+      element.style.display = "none";
+    });
+  document
+    .querySelectorAll(
+      "#addProductForm .form-control, #addProductForm .form-select"
+    )
     .forEach((element) => {
       element.classList.remove("is-invalid");
     });
-  currentProductImage.style.display = "none"; // Ẩn ảnh xem trước
+  document.getElementById("currentProductImage").style.display = "none"; // Ẩn ảnh xem trước
+  document.getElementById("productImage").value = ""; // Đảm bảo input file được reset
 
-  // Hiển thị modal thành công
-  const successModal = new bootstrap.Modal(
-    document.getElementById("successModal")
-  );
-  successModal.show();
+  successMessageElement.textContent = "Đã thêm sản phẩm mới thành công.";
+  successModalInstance.show();
 });
 
-// Xử lý khi modal thêm/sửa sản phẩm được hiển thị (để reset form hoặc điền dữ liệu)
+/**
+ * Xử lý khi modal thêm sản phẩm được hiển thị (trước khi nó hoàn toàn hiện ra).
+ * Thiết lập tiêu đề modal và reset form.
+ */
 addProductModalElement.addEventListener("show.bs.modal", function (event) {
-  const button = event.relatedTarget; // Nút đã click để mở modal
-  // Kiểm tra xem button có tồn tại và có thuộc tính data-id không
-  const productId =
-    button && button.getAttribute("data-id")
-      ? button.getAttribute("data-id")
-      : null;
-
-  // Reset form và ẩn tất cả lỗi khi modal mở
-  addProductForm.reset();
-  document.querySelectorAll(".invalid-feedback").forEach((element) => {
-    element.style.display = "none";
-  });
+  modalTitle.textContent = "Thêm sản phẩm mới";
+  addProductForm.reset(); // Reset tất cả các trường trong form
   document
-    .querySelectorAll(".form-control, .form-select")
+    .querySelectorAll("#addProductForm .invalid-feedback")
+    .forEach((element) => {
+      element.style.display = "none"; // Ẩn các thông báo lỗi
+    });
+  document
+    .querySelectorAll(
+      "#addProductForm .form-control, #addProductForm .form-select"
+    )
+    .forEach((element) => {
+      element.classList.remove("is-invalid"); // Xóa viền đỏ lỗi
+    });
+  document.getElementById("currentProductImage").style.display = "none"; // Ẩn ảnh xem trước của sản phẩm hiện tại
+  document.getElementById("productImage").value = ""; // Đảm bảo input file được reset
+});
+
+// --- NEW: LOGIC CHO MODAL SỬA SẢN PHẨM ---
+
+/**
+ * Xử lý khi modal sửa sản phẩm được hiển thị.
+ * Điền dữ liệu của sản phẩm được chọn vào form.
+ */
+editProductModalElement.addEventListener("show.bs.modal", function (event) {
+  const button = event.relatedTarget; // Nút "Sửa" đã click
+  const productId = button.getAttribute("data-id"); // Lấy ID sản phẩm từ data-id
+
+  // --- BƯỚC 1: RESET FORM VÀ ẨN TẤT CẢ LỖI KHI MODAL MỞ ---
+  editProductForm.reset();
+  document
+    .querySelectorAll("#editProductForm .invalid-feedback")
+    .forEach((element) => {
+      element.style.display = "none";
+    });
+  document
+    .querySelectorAll(
+      "#editProductForm .form-control, #editProductForm .form-select"
+    )
     .forEach((element) => {
       element.classList.remove("is-invalid");
     });
-  currentProductImage.style.display = "none"; // Ẩn ảnh xem trước
+  editCurrentProductImage.style.display = "none";
+  editProductImageInput.value = ""; // Đảm bảo input file được reset
 
-  if (productId) {
-    // Chế độ SỬA
-    modalTitle.textContent = "Sửa sản phẩm";
-    productIdToEditInput.value = productId; // Lưu ID sản phẩm cần sửa
-    const product = productsData.find((p) => p.id === productId);
+  // SỬA Ở ĐÂY: Sử dụng editProductIdInput để lưu ID
+  editProductIdInput.value = productId;
 
-    if (product) {
-      document.getElementById("productName").value = product.name;
-      document.getElementById("productDesc").value = product.desc;
-      document.getElementById("productPrice").value = product.price;
-      document.getElementById("productCategory").value = product.category;
-      document.getElementById("productBrand").value = product.brand;
-      document.getElementById("productQuantity").value = product.quantity;
+  // Tìm sản phẩm trong mảng dữ liệu
+  const product = productsData.find((p) => p.id === productId);
 
-      if (product.imageUrl) {
-        currentProductImage.src = product.imageUrl;
-        currentProductImage.style.display = "block";
-      } else {
-        currentProductImage.style.display = "none";
-      }
-      productImageInput.value = ""; // Xóa giá trị input file để người dùng có thể chọn file mới
+  if (product) {
+    // Điền thông tin sản phẩm vào các trường của form sửa
+    document.getElementById("editProductName").value = product.name;
+    document.getElementById("editProductDesc").value = product.desc;
+    document.getElementById("editProductPrice").value = product.price;
+    document.getElementById("editProductCategory").value = product.category;
+    document.getElementById("editProductBrand").value = product.brand;
+    document.getElementById("editProductQuantity").value = product.quantity;
+
+    // Hiển thị ảnh hiện tại của sản phẩm nếu có
+    if (product.imageUrl) {
+      editCurrentProductImage.src = product.imageUrl;
+      editCurrentProductImage.style.display = "block";
+    } else {
+      editCurrentProductImage.style.display = "none";
     }
-  } else {
-    // Chế độ THÊM MỚI
-    modalTitle.textContent = "Thêm sản phẩm mới";
-    productIdToEditInput.value = ""; // Xóa ID sản phẩm nếu là thêm mới
   }
 });
 
-// --- Xử lý Xóa sản phẩm (Modal confirmDeleteModal) ---
-const confirmDeleteModalElement = document.getElementById("confirmDeleteModal");
-const productIdToDeleteInput = document.getElementById("productIdToDelete");
-const confirmDeleteBtn = document.getElementById("confirmDeleteBtn");
+/**
+ * Xử lý sự kiện submit form Sửa sản phẩm.
+ * Bao gồm validation và cập nhật sản phẩm vào mảng dữ liệu và DOM.
+ */
+editProductForm.addEventListener("submit", function (e) {
+  e.preventDefault();
 
-// Event delegation cho nút xóa (hiệu quả hơn khi có nhiều sản phẩm động)
-document
-  .getElementById("productList")
-  .addEventListener("click", function (event) {
-    if (event.target.classList.contains("delete-btn")) {
-      event.preventDefault(); // Ngăn hành vi mặc định của thẻ <a>
-      const productId = event.target.getAttribute("data-id");
-      productIdToDeleteInput.value = productId; // Lưu ID sản phẩm cần xóa
-      const confirmModal = new bootstrap.Modal(confirmDeleteModalElement);
-      confirmModal.show();
+  // SỬA Ở ĐÂY: Sử dụng editProductIdInput để lấy ID
+  const productId = editProductIdInput.value;
+  const productIndex = productsData.findIndex((p) => p.id === productId);
+
+  if (productIndex === -1) {
+    console.error("Không tìm thấy sản phẩm để sửa.");
+    return;
+  }
+
+  const currentProduct = productsData[productIndex];
+
+  // Lấy dữ liệu từ form sửa
+  const editProductNameInput = document.getElementById("editProductName");
+  const editProductDescInput = document.getElementById("editProductDesc");
+  const editProductPriceInput = document.getElementById("editProductPrice");
+  const editProductCategorySelect = document.getElementById(
+    "editProductCategory"
+  );
+  const editProductBrandInput = document.getElementById("editProductBrand");
+  const editProductQuantityInput = document.getElementById(
+    "editProductQuantity"
+  );
+  const editProductImageFile = editProductImageInput.files[0];
+
+  let isValid = true;
+
+  // Thực hiện validation cho từng trường của form sửa
+  isValid =
+    validateField(
+      editProductNameInput,
+      document.getElementById("editProductNameError"),
+      editProductNameInput.value.trim() !== ""
+    ) && isValid;
+  isValid =
+    validateField(
+      editProductDescInput,
+      document.getElementById("editProductDescError"),
+      editProductDescInput.value.trim() !== ""
+    ) && isValid;
+  isValid =
+    validateField(
+      editProductPriceInput,
+      document.getElementById("editProductPriceError"),
+      editProductPriceInput.value !== "" &&
+        parseFloat(editProductPriceInput.value) > 0
+    ) && isValid;
+  isValid =
+    validateField(
+      editProductCategorySelect,
+      document.getElementById("editProductCategoryError"),
+      editProductCategorySelect.value !== ""
+    ) && isValid;
+  isValid =
+    validateField(
+      editProductBrandInput,
+      document.getElementById("editProductBrandError"),
+      editProductBrandInput.value.trim() !== ""
+    ) && isValid;
+  isValid =
+    validateField(
+      editProductQuantityInput,
+      document.getElementById("editProductQuantityError"),
+      editProductQuantityInput.value !== "" &&
+        parseInt(editProductQuantityInput.value) > 0
+    ) && isValid;
+
+  // Validation cho ảnh: nếu không có file mới VÀ không có ảnh cũ, thì là lỗi
+  if (!editProductImageFile && !currentProduct.imageUrl) {
+    isValid =
+      validateField(
+        editProductImageInput,
+        document.getElementById("editProductImageError"),
+        false
+      ) && isValid;
+  } else {
+    validateField(
+      editProductImageInput,
+      document.getElementById("editProductImageError"),
+      true
+    );
+  }
+
+  if (!isValid) {
+    return; // Dừng nếu có lỗi validation
+  }
+
+  // Cập nhật thông tin sản phẩm trong mảng
+  currentProduct.name = editProductNameInput.value.trim();
+  currentProduct.desc = editProductDescInput.value.trim();
+  currentProduct.price = parseFloat(editProductPriceInput.value);
+  currentProduct.category = editProductCategorySelect.value;
+  currentProduct.brand = editProductBrandInput.value.trim();
+  currentProduct.quantity = parseInt(editProductQuantityInput.value);
+
+  if (editProductImageFile) {
+    // Nếu có chọn ảnh mới, giải phóng URL ảnh cũ nếu là blob URL
+    if (
+      currentProduct.imageUrl &&
+      currentProduct.imageUrl.startsWith("blob:")
+    ) {
+      URL.revokeObjectURL(currentProduct.imageUrl);
     }
-  });
+    currentProduct.imageUrl = URL.createObjectURL(editProductImageFile);
+    currentProduct.imageFile = editProductImageFile; // Lưu file gốc nếu cần
+  }
 
+  // Cập nhật DOM của sản phẩm đã sửa
+  const existingCard = currentProduct.domElement; // Lấy tham chiếu DOM đã lưu
+  if (existingCard) {
+    existingCard.querySelector(".product-info .name").textContent =
+      currentProduct.name;
+    existingCard.querySelector(
+      ".product-info .quantity"
+    ).textContent = `SL: ${currentProduct.quantity}`;
+    existingCard.querySelector(
+      ".product-info .price"
+    ).textContent = `Giá: ${currentProduct.price.toLocaleString("vi-VN")}đ`;
+    if (editProductImageFile) {
+      // Chỉ cập nhật src của ảnh nếu có ảnh mới được chọn
+      existingCard.querySelector("img").src = currentProduct.imageUrl;
+    }
+  }
+
+  console.log("Sản phẩm sau khi cập nhật:", currentProduct);
+  console.log("Dữ liệu sản phẩm hiện tại:", productsData);
+
+  editProductModalInstance.hide(); // Ẩn modal sửa sản phẩm
+
+  // Reset form và ẩn các thông báo lỗi sau khi thành công
+  editProductForm.reset();
+  document
+    .querySelectorAll("#editProductForm .invalid-feedback")
+    .forEach((element) => {
+      element.style.display = "none";
+    });
+  document
+    .querySelectorAll(
+      "#editProductForm .form-control, #editProductForm .form-select"
+    )
+    .forEach((element) => {
+      element.classList.remove("is-invalid");
+    });
+  editCurrentProductImage.style.display = "none";
+  editProductImageInput.value = "";
+
+  successMessageElement.textContent = "Đã cập nhật sản phẩm thành công.";
+  successModalInstance.show();
+});
+
+// --- Xử lý Xóa sản phẩm (Modal confirmDeleteModal) ---
+
+/**
+ * Event Delegation cho nút xóa trên danh sách sản phẩm.
+ * Nút "Sửa" đã được xử lý bằng data-bs-toggle trực tiếp trên HTML.
+ */
+productListContainer.addEventListener("click", function (event) {
+  // Không cần event.preventDefault() ở đây nếu nút Sửa có data-bs-toggle
+  // và nút Xóa vẫn dùng href="#"
+  // Tuy nhiên, để đảm bảo không nhảy trang, giữ lại là tốt.
+  event.preventDefault();
+
+  if (event.target.classList.contains("delete-btn")) {
+    const productId = event.target.getAttribute("data-id");
+    productIdToDeleteInput.value = productId; // Lưu ID sản phẩm cần xóa vào input ẩn
+    confirmDeleteModalInstance.show(); // Hiển thị modal xác nhận xóa
+  }
+  // Nút "Sửa" không cần handleEditProduct(productId) nữa vì đã dùng data-bs-toggle
+});
+
+/**
+ * Xử lý sự kiện click nút "Xác nhận" trong modal xác nhận xóa.
+ * Xóa sản phẩm khỏi mảng dữ liệu và DOM, sau đó hiển thị thông báo thành công.
+ */
 confirmDeleteBtn.addEventListener("click", function () {
   const productId = productIdToDeleteInput.value;
   if (productId) {
-    // Xóa khỏi mảng dữ liệu
     const productIndex = productsData.findIndex((p) => p.id === productId);
     if (productIndex !== -1) {
-      // Giải phóng Object URL nếu đó là một blob URL từ ảnh mới được thêm
+      // Giải phóng Object URL nếu ảnh là một blob URL (được tạo khi thêm/sửa ảnh)
       if (
         productsData[productIndex].imageUrl &&
         productsData[productIndex].imageUrl.startsWith("blob:")
       ) {
         URL.revokeObjectURL(productsData[productIndex].imageUrl);
       }
-      productsData.splice(productIndex, 1);
+      // Xóa thẻ sản phẩm khỏi DOM (giao diện) thông qua tham chiếu domElement
+      if (productsData[productIndex].domElement) {
+        productsData[productIndex].domElement.remove();
+      }
+      productsData.splice(productIndex, 1); // Xóa sản phẩm khỏi mảng dữ liệu
     }
 
-    // Xóa khỏi DOM
-    const productCardToRemove = document.getElementById(productId);
-    if (productCardToRemove) {
-      productCardToRemove.remove();
-    }
-
-    console.log("Sản phẩm còn lại:", productsData);
+    console.log("Sản phẩm còn lại trong data:", productsData);
 
     // Ẩn modal xác nhận xóa
-    const confirmModalInstance = bootstrap.Modal.getInstance(
-      confirmDeleteModalElement
-    );
-    confirmModalInstance.hide();
+    confirmDeleteModalInstance.hide();
+
+    // Cập nhật nội dung và hiển thị modal thông báo thành công
+    successMessageElement.textContent = "Đã xóa sản phẩm thành công.";
+    successModalInstance.show();
   }
 });
 
-// Chạy hàm tải sản phẩm ban đầu khi DOM đã tải xong
+/**
+ * Xử lý khi DOM (cấu trúc HTML) đã tải xong.
+ * Tải sản phẩm ban đầu, khởi tạo các Bootstrap Modal instances,
+ * và thêm sự kiện 'input' để ẩn thông báo lỗi khi người dùng bắt đầu nhập lại.
+ */
 document.addEventListener("DOMContentLoaded", () => {
-  loadInitialProducts();
-  // Không cần attachEventListenersToProductButtons() ở đây lần nữa nếu event delegation đã được thiết lập đúng
-  // Hoặc nếu bạn muốn các nút Sửa/Xóa của các sản phẩm mẫu cũng hoạt động ngay, thì vẫn cần.
-  // Với event delegation trên productList cho nút delete, bạn không cần gọi lại cho mỗi nút.
-  // Đối với nút edit, hàm handleEditProduct được gọi trực tiếp khi modal show.bs.modal,
-  // nên cũng không cần gắn listener riêng ở đây.
+  loadInitialProducts(); // Tải dữ liệu sản phẩm từ HTML ban đầu vào mảng JS
 
-  // Tuy nhiên, để đảm bảo tính nhất quán và dễ quản lý,
-  // chúng ta sẽ gọi lại attachEventListenersToProductButtons() để xử lý các nút 'edit-btn'
-  // và 'delete-btn' của các sản phẩm mẫu có sẵn khi tải trang.
-  // Đối với các sản phẩm mới thêm, hàm renderProduct() đã gọi lại nó.
-  attachEventListenersToProductButtons();
-});
+  // Khởi tạo các Bootstrap Modal instances một lần duy nhất
+  addProductModalInstance = new bootstrap.Modal(addProductModalElement);
+  editProductModalInstance = new bootstrap.Modal(editProductModalElement); // Khởi tạo modal sửa
+  confirmDeleteModalInstance = new bootstrap.Modal(confirmDeleteModalElement);
+  successModalInstance = new bootstrap.Modal(
+    document.getElementById("successModal")
+  );
 
-// Thêm sự kiện 'input' để ẩn lỗi khi người dùng bắt đầu nhập lại
-addProductForm.querySelectorAll("input, textarea, select").forEach((input) => {
-  input.addEventListener("input", function () {
-    if (this.classList.contains("is-invalid")) {
-      this.classList.remove("is-invalid");
-      const errorId = this.id + "Error";
-      const errorElement = document.getElementById(errorId);
-      if (errorElement) {
-        errorElement.style.display = "none";
-      }
-    }
-  });
+  // Thêm sự kiện 'input' cho tất cả các trường trong form THÊM SẢN PHẨM để ẩn lỗi
+  addProductForm
+    .querySelectorAll("input, textarea, select")
+    .forEach((input) => {
+      input.addEventListener("input", function () {
+        if (this.classList.contains("is-invalid")) {
+          this.classList.remove("is-invalid");
+          const errorId = this.id + "Error";
+          const errorElement = document.getElementById(errorId);
+          if (errorElement) {
+            errorElement.style.display = "none";
+          }
+        }
+      });
+    });
+
+  // Thêm sự kiện 'input' cho tất cả các trường trong form SỬA SẢN PHẨM để ẩn lỗi
+  editProductForm
+    .querySelectorAll("input, textarea, select")
+    .forEach((input) => {
+      input.addEventListener("input", function () {
+        if (this.classList.contains("is-invalid")) {
+          this.classList.remove("is-invalid");
+          const errorId = this.id + "Error";
+          const errorElement = document.getElementById(errorId);
+          if (errorElement) {
+            errorElement.style.display = "none";
+          }
+        }
+      });
+    });
 });
