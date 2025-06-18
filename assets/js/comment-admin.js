@@ -187,7 +187,7 @@ document.addEventListener("DOMContentLoaded", function () {
         );
 
         hideReasonModal.hide();
-        successMessage.textContent = "Đánh giá đã được ẩn thành công.";
+        successMessage.textContent = "Đánh giá đã được ẩn.";
         generalSuccessModal.show();
       }
     }

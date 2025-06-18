@@ -67,7 +67,7 @@
             </a>
           </li>
           <li class="nav-item" id="nav-item">
-            <a class="nav-link" aria-current="page" href="../pages/login.php">
+            <a class="nav-link" aria-current="page" href="../pages/product-favorite.php">
               <i class="fa-solid fa-heart"></i>
             </a>
           </li>

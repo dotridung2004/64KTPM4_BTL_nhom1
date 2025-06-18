@@ -5,19 +5,44 @@ document.addEventListener("DOMContentLoaded", () => {
   const clearAllBtn = document.querySelector(".clear-all");
   const checkoutBtn = document.querySelector(".checkout-btn");
 
-  let cart = JSON.parse(localStorage.getItem("cart")) || [];
+  const confirmDeleteModalElement =
+    document.getElementById("confirmDeleteModal");
+  const confirmDeleteModal = new bootstrap.Modal(confirmDeleteModalElement);
+  const confirmDeleteBtn = document.getElementById("confirmDeleteBtn");
 
-  // Hàm render giỏ hàng
+  let itemToDeleteIndex = null; // Stores the index of the item to be deleted (for individual deletion)
+  let confirmActionCallback = null; // Stores the function to execute on modal confirmation
+
+  // --- Initial Cart Loading and Normalization ---
+  let cart = JSON.parse(localStorage.getItem("cart")) || [];
+  cart = cart.map((item) => ({
+    ...item,
+    isChecked: item.isChecked !== undefined ? item.isChecked : true,
+    // Ensure price is a number. Convert from string if necessary.
+    price:
+      typeof item.price === "string"
+        ? parseInt(item.price.replace(/[^\d]/g, "")) || 0
+        : item.price || 0, // Default to 0 if price is missing or invalid
+    // Ensure imgSrc exists, prioritize imgSrc, then 'image', then empty string
+    imgSrc: item.imgSrc || item.image || "",
+    quantity: item.quantity > 0 ? item.quantity : 1, // Ensure quantity is at least 1
+  }));
+  localStorage.setItem("cart", JSON.stringify(cart)); // Update localStorage with normalized cart
+
+  // --- Core Functions ---
+
+  // Renders the cart items to the DOM
   function renderCart() {
     cartItemsContainer.innerHTML = "";
     let total = 0;
 
     if (cart.length === 0) {
-      cartItemsContainer.innerHTML = "<p>Giỏ hàng của bạn đang trống.</p>";
+      cartItemsContainer.innerHTML =
+        "<p class='text-center text-muted'>Giỏ hàng của bạn đang trống.</p>";
       totalPriceElement.textContent = "0đ";
       checkAll.checked = false;
       checkAll.disabled = true;
-      checkoutBtn.disabled = true;
+      checkoutBtn.disabled = true; // Disable checkout button when cart is empty
       return;
     }
 
@@ -25,38 +50,38 @@ document.addEventListener("DOMContentLoaded", () => {
     checkoutBtn.disabled = false;
 
     cart.forEach((item, index) => {
-      const priceNum = parseInt(item.price.replace(/[^\d]/g, "")) || 0;
-      const itemTotal = priceNum * item.quantity;
-      total += itemTotal;
+      const priceNum = item.price; // Price is already a number from initial mapping
+      // Only include in total if the item is checked
+      if (item.isChecked) {
+        total += priceNum * item.quantity;
+      }
 
       const itemHTML = `
         <div class="col-md-8">
           <div class="d-flex align-items-center mb-4">
-            <!-- Checkbox bên ngoài -->
             <div class="d-flex align-items-center px-2">
-              <input type="checkbox" class="form-check-input item-checkbox" data-index="${index}" checked style="width: 24px; height: 24px;background-color: green; border-color: black" />
+              <input type="checkbox" class="form-check-input item-checkbox" data-index="${index}" ${
+        item.isChecked ? "checked" : ""
+      } style="width: 24px; height: 24px;background-color: green; border-color: black" />
             </div>
 
-            <!-- Nội dung chính của sản phẩm -->
             <div class="cart-item bg-black text-white p-3 rounded flex-grow-1">
               <div class="d-flex">
-                <!-- Hình ảnh sản phẩm -->
                 <div style="margin-right:30px;margin-left:30px">
                   <img src="${
-                    item.image
+                    item.imgSrc
                   }" class="img-fluid rounded me-3" style="width: 120px; height: 120px; object-fit: cover" alt="${
         item.name
       }" />
                 </div>
 
-                <!-- Thông tin sản phẩm -->
                 <div class="flex-grow-1">
                   <div class="d-flex justify-content-between">
                     <div>
                       <h5 class="fw-bold mb-1" style="font-size:24px">${
                         item.name
                       }</h5>
-                      <div class="text-success mb-2" style="font-size:24px">${item.price.toLocaleString(
+                      <div class="text-success mb-2" style="font-size:24px">${priceNum.toLocaleString(
                         "vi-VN"
                       )}đ</div>
                       <div class="d-flex align-items-center gap-2 mb-2">
@@ -66,19 +91,16 @@ document.addEventListener("DOMContentLoaded", () => {
                       </div>
                       <hr class="text-white my-2" />
                       <div class="fw-bold fs-5" >${(
-                        parseInt(item.price.replace(/[^\d]/g, "")) *
-                        item.quantity
+                        priceNum * item.quantity
                       ).toLocaleString("vi-VN")}đ</div>
                     </div>
 
-                    <!-- Icon yêu thích và xóa -->
                     <div class="d-flex flex-column">
-                      <button class="btn btn-link text-white fs-5" style="margin-left:250px">
+                      <button class="btn btn-link text-white fs-5 favorite-btn" style="margin-left:250px" data-index="${index}">
                         <i class="fa-regular fa-heart fa-xl"></i>
                       </button>
 
-                      <!-- Icon thùng rác góc dưới phải -->
-                      <button class="btn btn-link text-white fs-5 remove-btn" style="margin-top:100px;margin-left:250px"data-index="${index}">
+                      <button class="btn btn-link text-white fs-5 remove-btn" style="margin-top:100px;margin-left:250px" data-index="${index}">
                         <i class="fa-solid fa-trash-can fa-xl"></i>
                       </button>
                     </div>
@@ -93,152 +115,48 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     totalPriceElement.textContent = total.toLocaleString("vi-VN") + "đ";
+    updateCheckAllCheckboxState(); // Update "Check all" checkbox state after rendering
   }
 
-  // Cập nhật tổng tiền theo các sản phẩm được chọn
+  // Updates the total price based on checked items in the cart array
   function updateTotalPrice() {
-    const checkboxes = document.querySelectorAll(".item-checkbox");
     let total = 0;
-
-    checkboxes.forEach((checkbox) => {
-      if (checkbox.checked) {
-        const idx = checkbox.dataset.index;
-        const item = cart[idx];
-        const priceNum = parseInt(item.price.replace(/[^\d]/g, "")) || 0;
+    cart.forEach((item) => {
+      if (item.isChecked) {
+        const priceNum = item.price; // Price is already a number
         total += priceNum * item.quantity;
       }
     });
-
     totalPriceElement.textContent = total.toLocaleString("vi-VN") + "đ";
   }
 
-  // Xóa sản phẩm theo index
-  cartItemsContainer.addEventListener("click", (e) => {
-    if (e.target.classList.contains("remove-btn")) {
-      const index = e.target.dataset.index;
-      cart.splice(index, 1);
-      localStorage.setItem("cart", JSON.stringify(cart));
-      renderCart();
-      updateTotalPrice();
-    }
-  });
-
-  // Xóa tất cả sản phẩm
-  clearAllBtn.addEventListener("click", () => {
-    if (confirm("Bạn có chắc muốn xóa tất cả sản phẩm?")) {
-      localStorage.removeItem("cart");
-      cart = [];
-      renderCart();
-      updateTotalPrice();
-    }
-  });
-
-  // Chọn tất cả checkbox
-  checkAll.addEventListener("change", (e) => {
-    const checked = e.target.checked;
-    document.querySelectorAll(".item-checkbox").forEach((cb) => {
-      cb.checked = checked;
-    });
-    updateTotalPrice();
-  });
-
-  // Bắt sự kiện thay đổi checkbox từng sản phẩm
-  cartItemsContainer.addEventListener("change", (e) => {
-    if (e.target.classList.contains("item-checkbox")) {
-      // Nếu có 1 checkbox chưa chọn thì bỏ chọn "Chọn tất cả"
-      const allCheckboxes = document.querySelectorAll(".item-checkbox");
-      const allChecked = Array.from(allCheckboxes).every((cb) => cb.checked);
+  // Updates the state of the "Check all" checkbox
+  function updateCheckAllCheckboxState() {
+    if (cart.length === 0) {
+      checkAll.checked = false;
+      checkAll.disabled = true;
+    } else {
+      const allChecked = cart.every((item) => item.isChecked);
       checkAll.checked = allChecked;
-
-      updateTotalPrice();
+      checkAll.disabled = false;
     }
-  });
+  }
 
-  // Xử lý nút Thanh toán (ví dụ alert)
-  checkoutBtn.addEventListener("click", () => {
-    const selectedItems = [];
-    document.querySelectorAll(".item-checkbox").forEach((cb) => {
-      if (cb.checked) {
-        selectedItems.push(cart[cb.dataset.index]);
-      }
-    });
+  // Generic function to show the confirmation modal
+  function showConfirmModal(callback) {
+    confirmActionCallback = callback; // Store the function to call on confirmation
+    confirmDeleteModal.show();
+  }
 
-    if (selectedItems.length === 0) {
-      alert("Vui lòng chọn ít nhất một sản phẩm để thanh toán.");
-      return;
-    }
+  // --- Event Listeners ---
 
-    // Ở đây bạn có thể xử lý gửi dữ liệu đi, ví dụ:
-    // console.log("Thanh toán các sản phẩm:", selectedItems);
-
-    alert(`Bạn đã chọn ${selectedItems.length} sản phẩm để thanh toán.`);
-  });
-
-  renderCart();
-  updateTotalPrice();
-
-  // Xử lý bấm trái tim (thêm/bỏ yêu thích)
+  // Event delegation for quantity, remove, and favorite buttons
   cartItemsContainer.addEventListener("click", (e) => {
-    const heartIcon = e.target.closest(".fa-heart");
-
-    if (heartIcon) {
-      if (
-        heartIcon.classList.contains("fa-solid") &&
-        heartIcon.classList.contains("text-danger")
-      ) {
-        // Nếu đã yêu thích -> bỏ yêu thích
-        heartIcon.classList.remove("fa-solid", "text-danger");
-        heartIcon.classList.add("fa-regular");
-      } else {
-        // Nếu chưa yêu thích -> thêm yêu thích
-        heartIcon.classList.remove("fa-regular");
-        heartIcon.classList.add("fa-solid", "text-danger");
-
-        // Hiện modal yêu thích
-        const favoriteModal = new bootstrap.Modal(
-          document.getElementById("favoriteModal")
-        );
-        favoriteModal.show();
-      }
-    }
-  });
-
-  // Xử lý bấm icon thùng rác
-  let itemToDeleteIndex = null;
-
-  cartItemsContainer.addEventListener("click", (e) => {
-    const trashIcon = e.target.closest(".fa-trash-can");
-    if (trashIcon) {
-      itemToDeleteIndex = trashIcon.closest("button")?.dataset.index;
-
-      const deleteModal = new bootstrap.Modal(
-        document.getElementById("confirmDeleteModal")
-      );
-      deleteModal.show();
-    }
-  });
-
-  // Xử lý xác nhận xóa trong modal
-  document.getElementById("confirmDeleteBtn").addEventListener("click", () => {
-    if (itemToDeleteIndex !== null) {
-      cart.splice(itemToDeleteIndex, 1);
-      localStorage.setItem("cart", JSON.stringify(cart));
-      renderCart();
-      updateTotalPrice();
-      itemToDeleteIndex = null;
-    }
-    const deleteModal = bootstrap.Modal.getInstance(
-      document.getElementById("confirmDeleteModal")
-    );
-    deleteModal.hide();
-  });
-
-  // Xử lý tăng/giảm số lượng sản phẩm
-  cartItemsContainer.addEventListener("click", (e) => {
-    const btn = e.target.closest(".quantity-btn");
-    if (btn) {
-      const index = parseInt(btn.dataset.index);
-      const action = btn.dataset.action;
+    // Quantity buttons
+    const quantityBtn = e.target.closest(".quantity-btn");
+    if (quantityBtn) {
+      const index = parseInt(quantityBtn.dataset.index);
+      const action = quantityBtn.dataset.action;
 
       if (action === "increase") {
         cart[index].quantity++;
@@ -246,19 +164,132 @@ document.addEventListener("DOMContentLoaded", () => {
         if (cart[index].quantity > 1) {
           cart[index].quantity--;
         } else {
-          return; // Không giảm xuống dưới 1
+          return; // Do not decrease below 1
         }
       }
-
       localStorage.setItem("cart", JSON.stringify(cart));
-      renderCart();
+      renderCart(); // Re-render to update quantities and totals
       updateTotalPrice();
 
-      // Hiển thị modal cập nhật thành công
+      // Show success modal
       const updateModal = new bootstrap.Modal(
         document.getElementById("updateSuccessModal")
       );
       updateModal.show();
+      return;
+    }
+
+    // Remove item button (trash icon)
+    const removeBtn = e.target.closest(".remove-btn");
+    if (removeBtn) {
+      itemToDeleteIndex = parseInt(removeBtn.dataset.index); // Set index for individual deletion
+      showConfirmModal(() => {
+        // Callback for individual item deletion
+        cart.splice(itemToDeleteIndex, 1);
+        localStorage.setItem("cart", JSON.stringify(cart));
+        renderCart();
+        updateTotalPrice();
+        itemToDeleteIndex = null; // Reset
+      });
+      return;
+    }
+
+    // Favorite button (heart icon)
+    const favoriteBtn = e.target.closest(".favorite-btn");
+    if (favoriteBtn) {
+      const heartIcon = favoriteBtn.querySelector(".fa-heart");
+      if (heartIcon) {
+        if (heartIcon.classList.contains("fa-solid")) {
+          // If already favorited -> unfavorite
+          heartIcon.classList.remove("fa-solid", "text-danger");
+          heartIcon.classList.add("fa-regular");
+        } else {
+          // If not favorited -> favorite
+          heartIcon.classList.remove("fa-regular");
+          heartIcon.classList.add("fa-solid", "text-danger");
+
+          // Show favorite modal
+          const favoriteModal = new bootstrap.Modal(
+            document.getElementById("favoriteModal")
+          );
+          favoriteModal.show();
+        }
+      }
+      return;
     }
   });
+
+  // Event delegation for item checkboxes
+  cartItemsContainer.addEventListener("change", (e) => {
+    if (e.target.classList.contains("item-checkbox")) {
+      const index = parseInt(e.target.dataset.index);
+      cart[index].isChecked = e.target.checked; // Update checked state in cart array
+      localStorage.setItem("cart", JSON.stringify(cart)); // Save to localStorage
+
+      updateTotalPrice();
+      updateCheckAllCheckboxState(); // Update "Check all" checkbox state
+    }
+  });
+
+  // "Clear All" button
+  clearAllBtn.addEventListener("click", () => {
+    showConfirmModal(() => {
+      // Callback for clearing all items
+      localStorage.removeItem("cart");
+      cart = []; // Empty the cart array
+      renderCart();
+      updateTotalPrice();
+      updateCheckAllCheckboxState();
+    });
+  });
+
+  // "Check All" checkbox
+  checkAll.addEventListener("change", (e) => {
+    const checked = e.target.checked;
+    cart.forEach((item) => {
+      item.isChecked = checked; // Update checked state for all items in cart array
+    });
+    localStorage.setItem("cart", JSON.stringify(cart)); // Save to localStorage
+    renderCart(); // Re-render to update all item checkboxes
+    updateTotalPrice();
+  });
+
+  // Confirmation button in the delete modal
+  confirmDeleteBtn.addEventListener("click", () => {
+    if (confirmActionCallback) {
+      confirmActionCallback(); // Execute the stored callback function
+    }
+    confirmDeleteModal.hide(); // Hide the modal after action
+  });
+
+  // Checkout button
+  checkoutBtn.addEventListener("click", () => {
+    const selectedItems = cart.filter((item) => item.isChecked); // Filter selected items
+
+    if (selectedItems.length === 0) {
+      alert("Vui lòng chọn ít nhất một sản phẩm để thanh toán.");
+      return;
+    }
+
+    // Save selected items to localStorage under a new key for the payment page
+    const itemsToSaveForPayment = selectedItems.map((item) => ({
+      name: item.name,
+      quantity: item.quantity,
+      price: item.price,
+      imgSrc: item.imgSrc,
+    }));
+
+    localStorage.setItem(
+      "selectedItemsForPayment",
+      JSON.stringify(itemsToSaveForPayment)
+    );
+
+    // Redirect to the payment page
+    window.location.href = "../pages/payment.php"; // Adjust path if necessary
+  });
+
+  // --- Initial Page Load ---
+  renderCart();
+  updateTotalPrice(); // Ensure correct total price on page load
+  updateCheckAllCheckboxState(); // Ensure correct initial state of checkAll
 });

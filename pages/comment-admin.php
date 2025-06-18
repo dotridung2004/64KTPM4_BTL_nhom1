@@ -205,7 +205,7 @@
                     </div>
                     <input type="hidden" id="reviewIdToHideReason">
                 </div>
-                <div class="modal-footer justify-content-center">
+                <div class="modal-footer">
                     <button type="button" class="btn btn-success text-white" id="confirmHideReasonBtn">Xác nhận</button>
                     <button type="button" class="btn btn-outline-danger" data-bs-dismiss="modal">Hủy</button>
                 </div>
@@ -284,7 +284,7 @@
                     </div>
                     <input type="hidden" id="reportProductId">
                 </div>
-                <div class="modal-footer justify-content-center">
+                <div class="modal-footer">
                     <button type="button" class="btn btn-success text-white" id="generateReportBtn">Xuất báo cáo</button>
                     <button type="button" class="btn btn-outline-danger" data-bs-dismiss="modal">Hủy</button>
                 </div>
@@ -332,7 +332,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer justify-content-center">
+                <div class="modal-footer">
                     <button type="button" class="btn btn-success text-white" data-bs-dismiss="modal">Đóng</button>
                 </div>
             </div>
@@ -382,9 +382,9 @@
                 <div class="modal-body text-black">
                     <p class="mb-0">Không thể ẩn đánh giá. Vui lòng kiểm tra kết nối hoặc dữ liệu.</p>
                 </div>
-                <div class="modal-footer justify-content-center">
+                <div class="modal-footer">
                     <button type="button" class="btn btn-danger text-white" data-bs-dismiss="modal">Thử lại</button>
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="button" class="btn btn-outline-danger" data-bs-dismiss="modal">Hủy</button>
                 </div>
             </div>
         </div>
@@ -398,11 +398,11 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body text-black">
-                    <p class="mb-0">Không thể duyệt đánh giá. Vui lòng kiểm tra kết nối hoặc thử lại.</p>
+                    <p class="mb-0">Không thể duyệt đánh giá. Vui lòng thử lại.</p>
                 </div>
-                <div class="modal-footer justify-content-center">
+                <div class="modal-footer">
                     <button type="button" class="btn btn-danger text-white" data-bs-dismiss="modal">Thử lại</button>
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="button" class="btn btn-outline-danger" data-bs-dismiss="modal">Hủy</button>
                 </div>
             </div>
         </div>
@@ -418,9 +418,9 @@
                 <div class="modal-body text-black">
                     <p class="mb-0">Xuất báo cáo thất bại. Vui lòng kiểm tra kết nối hoặc thử lại sau.</p>
                 </div>
-                <div class="modal-footer justify-content-center">
+                <div class="modal-footer">
                     <button type="button" class="btn btn-danger text-white" data-bs-dismiss="modal">Thử lại</button>
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="button" class="btn btn-outline-danger" data-bs-dismiss="modal">Hủy</button>
                 </div>
             </div>
         </div>
